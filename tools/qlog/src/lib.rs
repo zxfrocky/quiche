@@ -285,6 +285,7 @@
 //!     None,
 //!     std::time::Instant::now(),
 //!     trace,
+//!     qlog::ImportanceLogLevel::Base,
 //!     Box::new(file),
 //! );
 //!
@@ -320,6 +321,7 @@
 //! #     None,
 //! #     std::time::Instant::now(),
 //! #     trace,
+//! #     qlog::ImportanceLogLevel::Base,
 //! #     Box::new(file),
 //! # );
 //! let event = qlog::event::Event::metrics_updated_min();
@@ -359,6 +361,7 @@
 //! #     None,
 //! #     std::time::Instant::now(),
 //! #     trace,
+//! #     qlog::ImportanceLogLevel::Base,
 //! #     Box::new(file),
 //! # );
 //! let qlog_pkt_hdr = qlog::PacketHeader::with_type(
@@ -409,6 +412,7 @@
 //! #     None,
 //! #     std::time::Instant::now(),
 //! #     trace,
+//! #     qlog::ImportanceLogLevel::Base,
 //! #     Box::new(file),
 //! # );
 //!
@@ -448,6 +452,7 @@
 //! #     None,
 //! #     std::time::Instant::now(),
 //! #     trace,
+//! #     qlog::ImportanceLogLevel::Base,
 //! #     Box::new(file),
 //! # );
 //! streamer.finish_log().ok();
@@ -553,6 +558,13 @@ pub enum StreamerState {
     Finished,
 }
 
+#[derive(Clone, Copy)]
+pub enum ImportanceLogLevel {
+    Core  = 0,
+    Base  = 1,
+    Extra = 2,
+}
+
 /// A helper object specialized for streaming JSON-serialized qlog to a
 /// [`Write`] trait.
 ///
@@ -573,6 +585,7 @@ pub struct QlogStreamer {
     writer: Box<dyn std::io::Write + Send + Sync>,
     qlog: Qlog,
     state: StreamerState,
+    log_level: ImportanceLogLevel,
     first_event: bool,
     first_frame: bool,
 }
@@ -589,6 +602,7 @@ impl QlogStreamer {
     pub fn new(
         qlog_version: String, title: Option<String>, description: Option<String>,
         summary: Option<String>, start_time: std::time::Instant, trace: Trace,
+        log_level: ImportanceLogLevel,
         writer: Box<dyn std::io::Write + Send + Sync>,
     ) -> Self {
         let qlog = Qlog {
@@ -604,6 +618,7 @@ impl QlogStreamer {
             writer,
             qlog,
             state: StreamerState::Initial,
+            log_level,
             first_event: true,
             first_frame: false,
         }
@@ -660,6 +675,26 @@ impl QlogStreamer {
         Ok(())
     }
 
+    fn is_event_in_log_level(&self, event_importance: EventImportance) -> bool {
+        match (self.log_level, event_importance) {
+            (ImportanceLogLevel::Core, EventImportance::Core) => true,
+
+            (
+                ImportanceLogLevel::Base,
+                EventImportance::Core | EventImportance::Base,
+            ) => true,
+
+            (
+                ImportanceLogLevel::Extra,
+                EventImportance::Core |
+                EventImportance::Base |
+                EventImportance::Extra,
+            ) => true,
+
+            (..) => false,
+        }
+    }
+
     /// Writes a JSON-serialized `EventField`s at `std::time::Instant::now()`.
     ///
     /// Some qlog events can contain `QuicFrames`. If this is detected `true` is
@@ -687,6 +722,10 @@ impl QlogStreamer {
     ) -> Result<bool> {
         if self.state != StreamerState::Ready {
             return Err(Error::InvalidState);
+        }
+
+        if !self.is_event_in_log_level(event.importance) {
+            return Err(Error::Done);
         }
 
         let event_time = if cfg!(test) {
@@ -963,6 +1002,13 @@ pub enum EventField {
     Event(EventType),
 
     Data(EventData),
+}
+
+#[derive(Clone)]
+pub enum EventImportance {
+    Core,
+    Base,
+    Extra,
 }
 
 #[derive(Serialize, Clone)]
@@ -2778,6 +2824,7 @@ mod tests {
                 code: None,
                 description: None,
             },
+            importance: EventImportance::Core,
         };
 
         assert!(ev.is_valid());
@@ -2811,6 +2858,7 @@ mod tests {
             category: EventCategory::Error,
             ty: EventType::GenericEventType(GenericEventType::ConnectionError),
             data: EventData::FramesProcessed { frames: Vec::new() },
+            importance: EventImportance::Core,
         };
 
         assert!(!ev.is_valid());
@@ -2879,6 +2927,7 @@ mod tests {
             None,
             std::time::Instant::now(),
             trace,
+            ImportanceLogLevel::Base,
             writer,
         );
 

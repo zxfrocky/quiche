@@ -172,6 +172,8 @@ pub fn connect(
             let id = format!("{:?}", scid);
             let writer = make_qlog_writer(&dir, "client", &id);
 
+            conn.set_qlog_level(quiche::QlogLevel::Core);
+
             conn.set_qlog(
                 std::boxed::Box::new(writer),
                 "quiche-client qlog".to_string(),

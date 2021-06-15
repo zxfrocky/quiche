@@ -45,6 +45,7 @@ pub struct Event {
     pub category: EventCategory,
     pub ty: EventType,
     pub data: EventData,
+    pub importance: EventImportance,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -74,6 +75,7 @@ impl Event {
                 alpn_values,
                 stateless_reset_required,
             },
+            importance: EventImportance::Extra,
         }
     }
 
@@ -107,6 +109,7 @@ impl Event {
                 src_cid,
                 dst_cid,
             },
+            importance: EventImportance::Base,
         }
     }
 
@@ -139,6 +142,7 @@ impl Event {
                 dst_old,
                 dst_new,
             },
+            importance: EventImportance::Base,
         }
     }
 
@@ -157,6 +161,7 @@ impl Event {
                 ConnectivityEventType::SpinBitUpdated,
             ),
             data: EventData::SpinBitUpdated { state },
+            importance: EventImportance::Base,
         }
     }
 
@@ -173,6 +178,7 @@ impl Event {
                 ConnectivityEventType::ConnectionStateUpdated,
             ),
             data: EventData::ConnectionStateUpdated { old, new },
+            importance: EventImportance::Base,
         }
     }
 
@@ -234,6 +240,7 @@ impl Event {
 
                 preferred_address,
             },
+            importance: EventImportance::Core,
         }
     }
 
@@ -257,6 +264,7 @@ impl Event {
                 TransportEventType::DatagramsReceived,
             ),
             data: EventData::DatagramsReceived { count, byte_length },
+            importance: EventImportance::Extra,
         }
     }
 
@@ -273,6 +281,7 @@ impl Event {
             category: EventCategory::Transport,
             ty: EventType::TransportEventType(TransportEventType::DatagramsSent),
             data: EventData::DatagramsSent { count, byte_length },
+            importance: EventImportance::Extra,
         }
     }
 
@@ -291,6 +300,7 @@ impl Event {
                 TransportEventType::DatagramDropped,
             ),
             data: EventData::DatagramDropped { byte_length },
+            importance: EventImportance::Extra,
         }
     }
 
@@ -320,6 +330,7 @@ impl Event {
                 raw_encrypted,
                 raw_decrypted,
             },
+            importance: EventImportance::Core,
         }
     }
 
@@ -351,6 +362,7 @@ impl Event {
                 raw_encrypted,
                 raw_decrypted,
             },
+            importance: EventImportance::Core,
         }
     }
 
@@ -377,6 +389,7 @@ impl Event {
                 packet_size,
                 raw,
             },
+            importance: EventImportance::Base,
         }
     }
 
@@ -398,6 +411,7 @@ impl Event {
                 packet_type,
                 packet_number,
             },
+            importance: EventImportance::Base,
         }
     }
 
@@ -422,6 +436,7 @@ impl Event {
                 new,
                 stream_side,
             },
+            importance: EventImportance::Base,
         }
     }
 
@@ -440,6 +455,7 @@ impl Event {
                 TransportEventType::FramesProcessed,
             ),
             data: EventData::FramesProcessed { frames },
+            importance: EventImportance::Extra,
         }
     }
 
@@ -471,6 +487,7 @@ impl Event {
                 loss_reduction_factor,
                 persistent_congestion_threshold,
             },
+            importance: EventImportance::Base,
         }
     }
 
@@ -509,6 +526,7 @@ impl Event {
                 in_recovery,
                 pacing_rate,
             },
+            importance: EventImportance::Core,
         }
     }
 
@@ -530,6 +548,7 @@ impl Event {
                 RecoveryEventType::CongestionStateUpdated,
             ),
             data: EventData::CongestionStateUpdated { old, new },
+            importance: EventImportance::Base,
         }
     }
 
@@ -551,6 +570,7 @@ impl Event {
                 timer_type,
                 timeout,
             },
+            importance: EventImportance::Extra,
         }
     }
 
@@ -575,6 +595,7 @@ impl Event {
                 header,
                 frames,
             },
+            importance: EventImportance::Core,
         }
     }
 
@@ -595,6 +616,7 @@ impl Event {
                 RecoveryEventType::MarkedForRetransmit,
             ),
             data: EventData::MarkedForRetransmit { frames },
+            importance: EventImportance::Extra,
         }
     }
 
@@ -620,6 +642,7 @@ impl Event {
                 push_allowed,
                 waits_for_settings,
             },
+            importance: EventImportance::Base,
         }
     }
 
@@ -644,6 +667,7 @@ impl Event {
                 old,
                 new,
             },
+            importance: EventImportance::Base,
         }
     }
 
@@ -668,6 +692,7 @@ impl Event {
                 byte_length,
                 raw,
             },
+            importance: EventImportance::Core,
         }
     }
 
@@ -692,6 +717,7 @@ impl Event {
                 byte_length,
                 raw,
             },
+            importance: EventImportance::Core,
         }
     }
 
@@ -719,6 +745,7 @@ impl Event {
                 to,
                 raw,
             },
+            importance: EventImportance::Base,
         }
     }
 
@@ -742,6 +769,7 @@ impl Event {
                 stream_id,
                 decision,
             },
+            importance: EventImportance::Extra,
         }
     }
 
@@ -770,6 +798,7 @@ impl Event {
                 known_received_count,
                 current_insert_count,
             },
+            importance: EventImportance::Base,
         }
     }
 
@@ -788,6 +817,7 @@ impl Event {
             category: EventCategory::Qpack,
             ty: EventType::QpackEventType(QpackEventType::StreamStateUpdated),
             data: EventData::QpackStreamStateUpdated { stream_id, state },
+            importance: EventImportance::Base,
         }
     }
 
@@ -805,6 +835,7 @@ impl Event {
                 update_type,
                 entries,
             },
+            importance: EventImportance::Extra,
         }
     }
 
@@ -827,6 +858,7 @@ impl Event {
                 header_block,
                 raw,
             },
+            importance: EventImportance::Base,
         }
     }
 
@@ -856,6 +888,7 @@ impl Event {
                 header_block,
                 raw,
             },
+            importance: EventImportance::Base,
         }
     }
 
@@ -882,6 +915,7 @@ impl Event {
                 byte_length,
                 raw,
             },
+            importance: EventImportance::Base,
         }
     }
 
@@ -905,6 +939,7 @@ impl Event {
                 byte_length,
                 raw,
             },
+            importance: EventImportance::Base,
         }
     }
 
